@@ -210,7 +210,6 @@ export default {
         },
 
         addListeners() {
-            console.log("++ addListeners")
             this.wwd.addEventListener('dblclick', this.onDblClick);
             this.wwd.addEventListener('mousedown', this.onMouseDown);
             this.wwd.addEventListener('mouseup', this.onMouseUp);
@@ -218,8 +217,6 @@ export default {
             this.wwd.addEventListener('drop', this.onDrop);
         },
         removeListeners() {
-            console.log("-- removeListeners")
-
             this.wwd.removeEventListener('dblclick', this.onDblClick);
             this.wwd.removeEventListener('mousedown', this.onMouseDown);
             this.wwd.removeEventListener('mouseup', this.onMouseUp);
