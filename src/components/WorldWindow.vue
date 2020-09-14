@@ -3,16 +3,12 @@
     <world-window-controller @toggleLayerVisibility="toggleLayerVisibility"/>
 
     <canvas id="canvasOne" width="1024" height="768"
-                @dblclick="onDblClick"
-                @mousedown="onMouseDown"
-                @mouseup="onMouseUp"
-                @mousemove="onMouseMove"
-                @drop="onDrop"
                 @dragover="onDragOver"
         />
         <annotation-editor :evt="showEditorEvent"
                            @updateAnnotation="updateAnnotation"
                            @deleteAnnotation="deleteAnnotation"
+                           @close="annotationEditorClosed"
         />
     </v-layout>
 </template>
@@ -27,7 +23,7 @@ export default {
     name: "WorldWindow",
 
     data: () => (
-        {
+        {aaa: undefined,
             wwd: null,
             layers: {},
             icons: {},
@@ -46,20 +42,44 @@ export default {
             this.wwd.redraw();
         },
 
-        updateAnnotation(evt, text) {
-            const terrain = this.findObject(evt, true);
-            if (terrain) {
-                this.addAnnotation(text, terrain.position);
+        updateAnnotation(evt, text, annotation) {
+            this.currentAnnotation = undefined;
+
+            if (annotation) {
+                this.deleteAnnotation(annotation);
+                this.addAnnotation(text, annotation.position);
                 this.wwd.redraw();
+
+            } else {
+                const terrain = this.findObject(evt, true);
+                if (terrain) {
+                    this.aaa = this.addAnnotation(text, terrain.position);
+                    this.wwd.redraw();
+                    this.addListeners();
+                }
             }
         },
-        deleteAnnotation() {},
 
+        deleteAnnotation(annotation) {
+            this.currentAnnotation = undefined;
+            this.layers["Annotations"].removeRenderable(annotation);
+            this.wwd.redraw();
+            this.addListeners();
+        },
+
+        annotationEditorClosed() {
+            this.currentAnnotation = undefined;
+            this.addListeners();
+        },
 
         onDblClick(evt) {
+            this.currentAnnotation = undefined;
+            this.removeListeners();
+
             const obj = this.findObject(evt);
             if (obj && obj.userProperties.type === 'Annotation') {
-                this.showEditorEvent = {annotation: obj, event: evt};
+                this.currentAnnotation = obj;
+                this.showEditorEvent = {event: evt, annotation: obj};
             }
         },
 
@@ -92,8 +112,8 @@ export default {
         },
 
         onDrop(evt) {
-            this.showEditorEvent = {annotation: {}, event: evt};
-
+            this.removeListeners();
+            this.showEditorEvent = {event: evt};
         },
 
         onPointerMove(evt) { // disable globe rotation
@@ -151,7 +171,7 @@ export default {
             this.layers[type].addRenderable(placemark);
         },
 
-        addAnnotation(text, coordinates) {
+        addAnnotation(text, position) {
             // Set default annotation attributes.
             const annotationAttributes = new WorldWind.AnnotationAttributes(null);
             annotationAttributes.cornerRadius = 14;
@@ -167,15 +187,14 @@ export default {
             annotationAttributes.insets = new WorldWind.Insets(10, 10, 10, 10);
 
             // Set a location for the annotation to point to and create it.
-            const location = new WorldWind.Position(coordinates.latitude, coordinates.longitude, 3000.0);
-
-            // var location = new WorldWind.Position(40.964231, -103.627767, 1e2);
-            const annotation = new WorldWind.Annotation(location, annotationAttributes);
+            const annotation = new WorldWind.Annotation(position, annotationAttributes);
             // Text can be assigned to the annotation after creating it.
             annotation.label = text;
 
             annotation.userProperties = {type: 'Annotation'};
             this.layers['Annotations'].addRenderable(annotation);
+
+            return annotation;
 
         },
 
@@ -188,6 +207,21 @@ export default {
                 }
                 this.addStore(type, type + ' ' +i, this.icons[type], coords);
             }
+        },
+
+        addListeners() {
+            this.wwd.addEventListener('dblclick', this.onDblClick);
+            this.wwd.addEventListener('mousedown', this.onMouseDown);
+            this.wwd.addEventListener('mouseup', this.onMouseUp);
+            this.wwd.addEventListener('mousemove', this.onMouseMove);
+            this.wwd.addEventListener('drop', this.onDrop);
+        },
+        removeListeners() {
+            this.wwd.removeEventListener('dblclick', this.onDblClick);
+            this.wwd.removeEventListener('mousedown', this.onMouseDown);
+            this.wwd.removeEventListener('mouseup', this.onMouseUp);
+            this.wwd.removeEventListener('mousemove', this.onMouseMove);
+            this.wwd.removeEventListener('drop', this.onDrop);
         }
     },
 
@@ -209,6 +243,8 @@ export default {
 
         this.populateStores("Walmart", 10, {latitude: 40, longitude: -110});
         this.populateStores("Target", 10, {latitude: 30, longitude: -120});
+
+        this.addListeners();
 
     }
 }
