@@ -23,11 +23,12 @@ export default {
     name: "WorldWindow",
 
     data: () => (
-        {aaa: undefined,
+        {
             wwd: null,
             layers: {},
             icons: {},
             currentAnnotation: undefined,
+            lastHighlighted: undefined,
             showEditorEvent: undefined
         }
     ),
@@ -53,7 +54,7 @@ export default {
             } else {
                 const terrain = this.findObject(evt, true);
                 if (terrain) {
-                    this.aaa = this.addAnnotation(text, terrain.position);
+                    this.addAnnotation(text, terrain.position);
                     this.wwd.redraw();
                     this.addListeners();
                 }
@@ -92,12 +93,29 @@ export default {
         },
 
         onMouseMove(evt) {
+            let redraw = false;
+            
             if (this.currentAnnotation) {
                 const terrain = this.findObject(evt, true);
                 if (terrain) {
                     Object.assign(this.currentAnnotation.position, terrain.position);
-                    this.wwd.redraw();
+                    redraw = true;
                 }
+            }
+
+            if (this.lastHighlighted) {
+                this.lastHighlighted.targetVisibility = 0;
+                redraw = true;
+            }
+            
+            const obj = this.findObject(evt);
+            if (obj && obj.type !== "Annotation") { // mouse on the store
+                obj.targetVisibility = 1;
+                this.lastHighlighted = obj;
+                redraw = true;
+            }
+            if (redraw) {
+                this.wwd.redraw();
             }
         },
 
@@ -120,7 +138,7 @@ export default {
             evt.preventDefault();
         },
 
-        findObject(evt, getTerrain) {
+        findObject(evt, getTerrain, all) {
             const x = evt.clientX,
                 y = evt.clientY;
 
@@ -132,15 +150,17 @@ export default {
                     return terrain;
                 }
             } else {
+                const picked = [];
+
                 const pickList = this.wwd.pick(this.wwd.canvasCoordinates(x, y));
                 if (pickList.objects.length > 0) {
                     for (let i=0; i<pickList.objects.length; i++) {
                         let obj = pickList.objects[i];
                         if (!obj.isTerrain) {
-                            // obj.userObject.highlighted = true;
-                            return obj.userObject;
+                            picked.push(obj.userObject);
                         }
                     }
+                    return all ? picked : picked[0];
                 }
             }
             return null;
@@ -234,8 +254,8 @@ export default {
         this.layers["Target"] = new WorldWind.RenderableLayer("Target");
         this.layers["Annotations"] = new WorldWind.RenderableLayer("Annotations");
 
-        this.icons["Walmart"] = WorldWind.configuration.baseUrl + "images/pushpins/plain-red.png";
-        this.icons["Target"] = WorldWind.configuration.baseUrl + "images/pushpins/plain-blue.png";
+        this.icons["Target"] = WorldWind.configuration.baseUrl + "images/pushpins/plain-red.png";
+        this.icons["Walmart"] = WorldWind.configuration.baseUrl + "images/pushpins/plain-blue.png";
 
         Object.values(this.layers).forEach((layer) => {
             this.wwd.addLayer(layer)
