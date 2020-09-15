@@ -138,7 +138,7 @@ export default {
             evt.preventDefault();
         },
 
-        findObject(evt, getTerrain, all) {
+        findObject(evt, getTerrain) {
             const x = evt.clientX,
                 y = evt.clientY;
 
@@ -150,17 +150,14 @@ export default {
                     return terrain;
                 }
             } else {
-                const picked = [];
-
                 const pickList = this.wwd.pick(this.wwd.canvasCoordinates(x, y));
                 if (pickList.objects.length > 0) {
                     for (let i=0; i<pickList.objects.length; i++) {
                         let obj = pickList.objects[i];
                         if (!obj.isTerrain) {
-                            picked.push(obj.userObject);
+                            return obj.userObject;
                         }
                     }
-                    return all ? picked : picked[0];
                 }
             }
             return null;
