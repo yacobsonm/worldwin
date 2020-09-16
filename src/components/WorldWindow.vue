@@ -251,8 +251,8 @@ export default {
         this.layers["Target"] = new WorldWind.RenderableLayer("Target");
         this.layers["Annotations"] = new WorldWind.RenderableLayer("Annotations");
 
-        this.icons["Target"] = WorldWind.configuration.baseUrl + "images/pushpins/plain-red.png";
-        this.icons["Walmart"] = WorldWind.configuration.baseUrl + "images/pushpins/plain-blue.png";
+        this.icons["Target"] = "icons/target.png";
+        this.icons["Walmart"] = "icons/walmart.png";
 
         Object.values(this.layers).forEach((layer) => {
             this.wwd.addLayer(layer)

@@ -21,7 +21,9 @@
                 </v-row>
             </v-card-text>
             <v-card-actions>
-                <v-btn style="margin-left: 20px"  @click="deleteAnnotation">Delete</v-btn>
+                <v-btn style="margin-left: 20px"  @click="deleteAnnotation" v-if="annotation">
+                    Delete
+                </v-btn>
 
                 <v-spacer/>
                 <v-btn color="primary" @click="ok">Ok</v-btn>
